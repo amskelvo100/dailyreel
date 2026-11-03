@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Daily Reel">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#e4e8e3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#151a17" media="(prefers-color-scheme: dark)">
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAABmklEQVR42u3cMQ6CMBSAYWt6BMLQhNEd4WYexJuB7I4knsNdDTi+0O9boaQhf14nSE1pT/DL2StAHIgDcSAOxIE4EAfiQByIAz7l7cvLPO0+oh9Gyw+23OTAsYI4EAfiQByIA3EgDsRB7ZJPEzA5EAfiQByIA3EgDsSBOBAHiANxIA7EgTgQB+JAHIgDcYA4EAfiQByIA3EQW/7/1sf9Em3319sz/t5K10Xb22tdTQ4cK4gDcSAOxIE4EAfiAHEgDsSBOBAH4kAciANxIA7EAeJAHIgDcSAOxIE4EAfiQBwgDsSBOBAH4kAciANxIA7EAeJAHIgDcSAOxIE4EAfiQByIA8SBOBAH4kAciANxIA7EgThAHIgDcSAOxIE4EAfiQByIA8SBOBAH4kAciANxIA7EQR1SU1pvAZMDcSAOxIE4EAfiQByIA3GAOBAH4kAciANxIA7EgTgQB4gDcSAOxIE4EAeB5e3LyzztPqIfRssPttzkwLGCOBAH4kAciANxIA7EQe38TRCTA3EgDsSBOBAH4kAciANxwJc3Ux87e5LFyg8AAAAASUVORK5CYII=">
+<title>Daily Reel</title>
+<style>
+  :root {
+    --bg: #e4e8e3;
+    --panel: #f4f6f2;
+    --ink: #1b221e;
+    --muted: #55615a;
+    --line: #b9c2ba;
+    --band: #141a16;
+    --lit: #e3a83b;
+    --spent: #2e3733;
+    --error: #a8301d;
+    --display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #151a17;
+      --panel: #1e2521;
+      --ink: #e6eae5;
+      --muted: #9aa69e;
+      --line: #36413a;
+      --band: #0a0d0b;
+      --spent: #263029;
+      --error: #ff8a73;
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--ui);
+    line-height: 1.5;
+  }
+  main {
+    max-width: 980px; margin: 0 auto;
+    padding: calc(28px + env(safe-area-inset-top)) calc(18px + env(safe-area-inset-right)) calc(64px + env(safe-area-inset-bottom)) calc(18px + env(safe-area-inset-left));
+  }
+  h1 {
+    font-family: var(--display);
+    font-size: clamp(2.2rem, 6vw, 3.4rem);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin: 0 0 18px;
+  }
+  h2 { font-family: var(--display); font-size: 1.35rem; font-weight: 600; margin: 36px 0 12px; }
+
+  /* The film strip: one frame per credit */
+  .reel { background: var(--band); padding: 14px 0; position: relative; border-radius: 3px; }
+  .reel::before, .reel::after {
+    content: "";
+    position: absolute; left: 0; right: 0; height: 6px;
+    background: repeating-linear-gradient(90deg, var(--bg) 0 8px, transparent 8px 18px);
+    opacity: .9;
+  }
+  .reel::before { top: 4px; }
+  .reel::after { bottom: 4px; }
+  .frames { display: flex; gap: 3px; padding: 8px 12px; flex-wrap: nowrap; }
+  .frame { flex: 1 1 0; min-width: 0; height: 34px; background: var(--lit); border-radius: 1px; }
+  .frame.spent { background: var(--spent); }
+  .count { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-top: 10px; flex-wrap: wrap; }
+  .count strong { font-family: var(--display); font-size: 1.5rem; font-weight: 600; }
+  .count span { color: var(--muted); font-size: .92rem; }
+
+  form.make {
+    margin-top: 28px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 18px;
+  }
+  label { display: block; font-size: .9rem; font-weight: 600; margin-bottom: 6px; }
+  textarea, input, select {
+    width: 100%;
+    font: inherit;
+    font-size: 16px;
+    min-height: 44px;
+    -webkit-appearance: none;
+    appearance: none;
+    color: var(--ink);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 10px 12px;
+  }
+  textarea { min-height: 110px; resize: vertical; }
+  .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; margin-top: 14px; }
+  button {
+    font: inherit; font-weight: 600; cursor: pointer;
+    border-radius: 4px; border: 1px solid var(--ink);
+    padding: 10px 18px;
+    min-height: 44px;
+    background: var(--ink); color: var(--bg);
+  }
+  button.quiet { background: transparent; color: var(--ink); border-color: var(--line); padding: 8px 14px; min-height: 44px; font-weight: 500; font-size: .95rem; }
+  button:disabled { opacity: .5; cursor: wait; }
+  :focus-visible { outline: 3px solid var(--lit); outline-offset: 2px; }
+  .actions { display: flex; align-items: center; gap: 14px; margin-top: 16px; flex-wrap: wrap; }
+  .cost { color: var(--muted); font-size: .92rem; }
+  #msg { min-height: 1.5em; margin-top: 12px; font-size: .95rem; }
+  #msg.error { color: var(--error); }
+
+  .sheet { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 16px; }
+  figure { margin: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+  figure img { display: block; width: 100%; height: auto; cursor: zoom-in; background: var(--band); }
+  figcaption { padding: 10px 12px 12px; }
+  figcaption .no { font-family: var(--display); font-weight: 600; }
+  figcaption p { margin: 4px 0 10px; font-size: .86rem; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  figcaption .btns { display: flex; gap: 8px; }
+  .empty { color: var(--muted); border: 1px dashed var(--line); border-radius: 6px; padding: 28px 18px; text-align: center; }
+
+  details { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px 18px; margin-top: 28px; }
+  summary { cursor: pointer; font-weight: 600; }
+  details .row { margin-top: 16px; }
+  .hint { color: var(--muted); font-size: .85rem; margin: 6px 0 0; }
+
+  dialog { border: 0; padding: 0; background: transparent; max-width: 94vw; max-height: 94vh; }
+  dialog::backdrop { background: rgba(0,0,0,.75); }
+  dialog img { display: block; max-width: 94vw; max-height: 90vh; cursor: zoom-out; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Daily Reel</h1>
+
+  <section aria-label="Credits left today">
+    <div class="reel" aria-hidden="true"><div class="frames" id="frames"></div></div>
+    <div class="count">
+      <strong id="left">0 credits left</strong>
+      <span id="resetnote">Resets at midnight.</span>
+    </div>
+  </section>
+
+  <form class="make" id="makeForm" autocomplete="off">
+    <label for="prompt">Describe the image</label>
+    <textarea id="prompt" placeholder="Aerial view of a stone-carved underground passage lit by oil lamps, documentary photo style"></textarea>
+    <div class="row">
+      <div>
+        <label for="ratio">Shape</label>
+        <select id="ratio">
+          <option value="16:9">Wide 16:9</option>
+          <option value="9:16">Tall 9:16</option>
+          <option value="1:1">Square 1:1</option>
+          <option value="4:3">4:3</option>
+          <option value="3:2">3:2</option>
+          <option value="21:9">Cinema 21:9</option>
+        </select>
+      </div>
+      <div>
+        <label for="size">Quality</label>
+        <select id="size">
+          <option value="1K">1K</option>
+          <option value="2K">2K</option>
+          <option value="4K">4K</option>
+        </select>
+      </div>
+      <div>
+        <label for="count">How many</label>
+        <select id="count">
+          <option>1</option><option>2</option><option>3</option><option>4</option>
+        </select>
+      </div>
+    </div>
+    <div class="actions">
+      <button type="submit" id="go">Generate</button>
+      <span class="cost" id="cost"></span>
+    </div>
+    <div id="msg" role="status" aria-live="polite"></div>
+  </form>
+
+  <h2>Your images</h2>
+  <div class="sheet" id="sheet"></div>
+
+  <details id="settings">
+    <summary>Settings</summary>
+    <div class="row">
+      <div style="grid-column: 1 / -1">
+        <label for="apiKey">Google API key</label>
+        <input id="apiKey" type="password" placeholder="Paste your key from aistudio.google.com" autocomplete="off">
+        <p class="hint">The key is saved only in this browser. Do not share this file with the key inside it.</p>
+      </div>
+      <div>
+        <label for="daily">Credits per day</label>
+        <input id="daily" type="number" min="0" step="1">
+      </div>
+      <div>
+        <label for="model">Model name</label>
+        <input id="model" type="text">
+      </div>
+      <div>
+        <label for="cost1K">Cost of a 1K image</label>
+        <input id="cost1K" type="number" min="0" step="0.5">
+      </div>
+      <div>
+        <label for="cost2K">Cost of a 2K image</label>
+        <input id="cost2K" type="number" min="0" step="0.5">
+      </div>
+      <div>
+        <label for="cost4K">Cost of a 4K image</label>
+        <input id="cost4K" type="number" min="0" step="0.5">
+      </div>
+    </div>
+    <div class="actions">
+      <button type="button" class="quiet" id="resetToday">Reset today's credits</button>
+    </div>
+    <p class="hint">Credits are your own budget guard. Google still bills for every image, so also set a spending cap in your Google Cloud billing settings.</p>
+  </details>
+</main>
+
+<dialog id="viewer"><img id="viewerImg" alt=""></dialog>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+
+  /* ---------- Small storage helper (falls back to memory if the browser blocks storage) ---------- */
+  const mem = {};
+  const store = {
+    get(k, d) {
+      try {
+        const v = localStorage.getItem(k);
+        if (v !== null) return JSON.parse(v);
+      } catch (e) {}
+      return k in mem ? mem[k] : d;
+    },
+    set(k, v) {
+      mem[k] = v;
+      try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {}
+    }
+  };
+
+  /* ---------- Settings ---------- */
+  const defaults = {
+    apiKey: "",
+    model: "gemini-3.1-flash-image-preview",
+    daily: 50,
+    cost1K: 1,
+    cost2K: 2,
+    cost4K: 4
+  };
+  let settings = Object.assign({}, defaults, store.get("settings", {}));
+  const fields = ["apiKey", "model", "daily", "cost1K", "cost2K", "cost4K"];
+
+  function loadSettingsIntoForm() {
+    fields.forEach((f) => { $(f).value = settings[f]; });
+  }
+  fields.forEach((f) => {
+    $(f).addEventListener("change", () => {
+      const el = $(f);
+      settings[f] = el.type === "number" ? Math.max(0, Number(el.value) || 0) : el.value.trim();
+      if (el.type === "number") el.value = settings[f];
+      store.set("settings", settings);
+      renderMeter();
+      renderCost();
+    });
+  });
+
+  /* ---------- Daily credits ---------- */
+  function today() {
+    const d = new Date();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return d.getFullYear() + "-" + m + "-" + day;
+  }
+  function credits() {
+    let c = store.get("credits", null);
+    if (!c || c.date !== today()) {
+      c = { date: today(), used: 0 };
+      store.set("credits", c);
+    }
+    return c;
+  }
+  function remaining() { return Math.max(0, settings.daily - credits().used); }
+  function spend(n) {
+    const c = credits();
+    c.used += n;
+    store.set("credits", c);
+  }
+  function costEach() { return Number(settings["cost" + $("size").value]) || 0; }
+  function fmt(n) { return Number.isInteger(n) ? String(n) : n.toFixed(1); }
+
+  function renderMeter() {
+    const total = settings.daily;
+    const left = remaining();
+    const cells = Math.max(1, Math.min(total || 1, 100));
+    const litCells = total > 0 ? Math.round((cells * left) / total) : 0;
+    const frames = $("frames");
+    frames.textContent = "";
+    for (let i = 0; i < cells; i++) {
+      const f = document.createElement("div");
+      f.className = "frame" + (i < litCells ? "" : " spent");
+      frames.appendChild(f);
+    }
+    $("left").textContent = fmt(left) + " of " + fmt(total) + " credits left";
+  }
+  function renderCost() {
+    const n = Number($("count").value);
+    $("cost").textContent = "This will use " + fmt(costEach() * n) + " credits.";
+  }
+  $("size").addEventListener("change", renderCost);
+  $("count").addEventListener("change", renderCost);
+  $("resetToday").addEventListener("click", () => {
+    store.set("credits", { date: today(), used: 0 });
+    renderMeter();
+    say("Today's credits are back to full.");
+  });
+  setInterval(renderMeter, 60000); // picks up the midnight reset
+
+  /* ---------- Saved images (IndexedDB, with a memory fallback) ---------- */
+  let db = null;
+  let memItems = [];
+  let memId = 1;
+
+  function openDb() {
+    return new Promise((resolve) => {
+      try {
+        const req = indexedDB.open("daily-reel", 1);
+        req.onupgradeneeded = () => req.result.createObjectStore("images", { keyPath: "id", autoIncrement: true });
+        req.onsuccess = () => { db = req.result; resolve(); };
+        req.onerror = () => resolve();
+      } catch (e) { resolve(); }
+    });
+  }
+  function dbAdd(item) {
+    if (!db) { item.id = memId++; memItems.push(item); return Promise.resolve(item.id); }
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction("images", "readwrite");
+      const req = tx.objectStore("images").add(item);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  function dbAll() {
+    if (!db) return Promise.resolve(memItems.slice());
+    return new Promise((resolve) => {
+      const req = db.transaction("images").objectStore("images").getAll();
+      req.onsuccess = () => resolve(req.result || []);
+      req.onerror = () => resolve([]);
+    });
+  }
+  function dbDelete(id) {
+    if (!db) { memItems = memItems.filter((i) => i.id !== id); return Promise.resolve(); }
+    return new Promise((resolve) => {
+      const tx = db.transaction("images", "readwrite");
+      tx.objectStore("images").delete(id);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => resolve();
+    });
+  }
+
+  async function renderGallery() {
+    const items = (await dbAll()).sort((a, b) => b.id - a.id);
+    const sheet = $("sheet");
+    sheet.textContent = "";
+    if (!items.length) {
+      const e = document.createElement("div");
+      e.className = "empty";
+      e.textContent = "Nothing here yet. Describe an image above and press Generate.";
+      e.style.gridColumn = "1 / -1";
+      sheet.appendChild(e);
+      return;
+    }
+    items.forEach((it) => {
+      const src = "data:" + it.mime + ";base64," + it.data;
+      const fig = document.createElement("figure");
+
+      const img = document.createElement("img");
+      img.src = src;
+      img.alt = it.prompt;
+      img.addEventListener("click", () => {
+        $("viewerImg").src = src;
+        $("viewer").showModal();
+      });
+
+      const cap = document.createElement("figcaption");
+      const no = document.createElement("div");
+      no.className = "no";
+      no.textContent = "Frame " + it.id;
+      const p = document.createElement("p");
+      p.textContent = it.prompt;
+
+      const btns = document.createElement("div");
+      btns.className = "btns";
+      const dl = document.createElement("button");
+      dl.type = "button"; dl.className = "quiet"; dl.textContent = "Save";
+      dl.addEventListener("click", async () => {
+        try {
+          const bin = atob(it.data);
+          const bytes = new Uint8Array(bin.length);
+          for (let k = 0; k < bin.length; k++) bytes[k] = bin.charCodeAt(k);
+          const file = new File([bytes], "frame-" + it.id + "." + (it.mime.split("/")[1] || "png"), { type: it.mime });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({ files: [file] });
+            return;
+          }
+        } catch (err) {
+          if (err && err.name === "AbortError") return;
+        }
+        const a = document.createElement("a");
+        a.href = src;
+        a.download = "frame-" + it.id + "." + (it.mime.split("/")[1] || "png");
+        document.body.appendChild(a); a.click(); a.remove();
+      });
+      const del = document.createElement("button");
+      del.type = "button"; del.className = "quiet"; del.textContent = "Delete";
+      del.addEventListener("click", async () => { await dbDelete(it.id); renderGallery(); });
+      btns.append(dl, del);
+
+      cap.append(no, p, btns);
+      fig.append(img, cap);
+      sheet.appendChild(fig);
+    });
+  }
+  $("viewer").addEventListener("click", () => $("viewer").close());
+
+  /* ---------- Messages ---------- */
+  function say(text, isError) {
+    const m = $("msg");
+    m.textContent = text || "";
+    m.className = isError ? "error" : "";
+  }
+
+  /* ---------- Calling Google's image model ---------- */
+  async function callGemini(prompt, ratio, size) {
+    const url = "https://generativelanguage.googleapis.com/v1beta/models/" +
+      encodeURIComponent(settings.model) + ":generateContent";
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": settings.apiKey },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          responseModalities: ["IMAGE"],
+          imageConfig: { aspectRatio: ratio, imageSize: size }
+        }
+      })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error((data && data.error && data.error.message) || ("Request failed (" + res.status + ")."));
+    }
+    const parts = (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) || [];
+    const imgPart = parts.find((p) => (p.inlineData || p.inline_data) && !p.thought);
+    if (!imgPart) {
+      const text = parts.map((p) => p.text).filter(Boolean).join(" ");
+      const block = data.promptFeedback && data.promptFeedback.blockReason;
+      throw new Error(text || (block ? "The prompt was blocked: " + block + "." : "No image came back. Try rewording the prompt."));
+    }
+    const inline = imgPart.inlineData || imgPart.inline_data;
+    return { mime: inline.mimeType || inline.mime_type || "image/png", data: inline.data };
+  }
+
+  /* ---------- Generate ---------- */
+  $("makeForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    say("");
+    const prompt = $("prompt").value.trim();
+    if (!prompt) return say("Describe the image you want first.", true);
+    if (!settings.apiKey) {
+      $("settings").open = true;
+      return say("Add your Google API key in Settings first.", true);
+    }
+    const size = $("size").value;
+    const ratio = $("ratio").value;
+    const count = Number($("count").value);
+    const each = costEach();
+    const total = each * count;
+    if (total > remaining()) {
+      return say("That needs " + fmt(total) + " credits and you have " + fmt(remaining()) +
+        " left today. Lower the count or quality, or raise your daily credits in Settings.", true);
+    }
+
+    const btn = $("go");
+    btn.disabled = true;
+    let made = 0;
+    try {
+      for (let i = 0; i < count; i++) {
+        say("Generating image " + (i + 1) + " of " + count + "...");
+        const img = await callGemini(prompt, ratio, size);
+        spend(each);
+        made++;
+        await dbAdd({ prompt, ratio, size, mime: img.mime, data: img.data, created: Date.now() });
+        renderMeter();
+        await renderGallery();
+      }
+      say("Done. " + made + (made === 1 ? " image" : " images") + " added below.");
+    } catch (err) {
+      say(err.message + (made ? " (" + made + " finished before the error and were saved.)" : " No credits were used."), true);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  /* ---------- Start ---------- */
+  loadSettingsIntoForm();
+  renderMeter();
+  renderCost();
+  if (!settings.apiKey) $("settings").open = true;
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+  openDb().then(renderGallery);
+})();
+</script>
+</body>
+</html>
